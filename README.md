@@ -5,7 +5,10 @@
 - [기초 SQL 문법](#2-sql-문법)
   * [SELECT문 기초](#select문-기초)
   * [연산자](#연산자)
-  * [숫자, 문자열 함수](#숫자-문자열-함수)
+  * [숫자/문자열 함수](#숫자-문자열-함수)
+  * [시간/날짜 함수](#시간-날짜-관련-함수)
+  * [그룹 함수](#그룹-함수)
+  * [서브 쿼리](#서브-쿼리)
 - [데이터 모델링의 이해](#3-데이터-모델링의-이해)
 - [Level Schema](#level-schema)
 
@@ -77,7 +80,7 @@ SELECT title, release_year
 FROM film
 LIMIT 20, 10;
 ```
-위의 소드코드와 같이 LIMIT{가져올 개수} 또는 LIMIT {건너뛸 개수, 가져올 개수} 형태로 사용 가능합니다.
+위의 소드코드와 같이 `LIMIT{가져올 개수}` 또는 `LIMIT {건너뛸 개수, 가져올 개수}` 형태로 사용 가능합니다.
 
 ### 6. 원하는 예명(alias)으로 가져오기
 ``` SQL
@@ -132,9 +135,9 @@ SELECT '1'+'002'+3;
 문자열은 0으로 인식하지만 숫자로 구성된 문자열은 숫자로 자동 인식합니다. 숫자로 구성된 문자열은 숫자로 자동 인식된다는 점을 다음과 같은 소스코드로 응용할 수 있습니다.
 
 ``` SQL
-SELECT 
-	payment_id, 
-	rental_id, 
+SELECT
+    payment_id,
+    rental_id,
     amount,
     amount * 0.75 AS sale_amount
 FROM payment;
@@ -184,7 +187,7 @@ SELECT address, district, city_id
 FROM address
 WHERE district IN ('Texas', 'Alberta');
 ```
-IN 연산자를 활용해 Texas, Alberta에 속한 주소만 추출해보았습니다.
+`IN` 연산자를 활용해 Texas, Alberta에 속한 주소만 추출해보았습니다.
 
 ### 5. LIKE 연산자
 ``` SQL
@@ -194,7 +197,7 @@ SELECT
     city_id
 FROM address;
 ```
-LIKE문은 와일드카드를 사용해서 데이터를 조회할 수 있습니다.
+`LIKE문`은 와일드카드를 사용해서 데이터를 조회할 수 있습니다.
 |와일드 카드|설명|
 |:---:|---|
 |%|어떤 문자를 포함한 모든 것을 조회한다. 예를 들어 '%es%'는 문자 중간에 'es'가 포함된 모든 문자를 조회한다. 다만 정상적인 Index Range Scan이 불가능하다.|
@@ -209,7 +212,7 @@ SELECT
     CEIL(0.4),
     FLOOR(0.6);
 ```
-``ROUND``는 반올림 처리를 해주는 함수입니다. ``CEIL``은 올림, ``FLOOR``는 내림 처리를 해주는 함수입니다. CEIL과 FLOOR가 헷갈리시다면 CEIL은 천장을 의미하니까 올림! FLOOR는 바닥을 의미하니까 내림!으로 기억하시면 됩니다.
+``ROUND``는 반올림 처리를 해주는 함수입니다. ``CEIL``은 올림, ``FLOOR``는 내림 처리를 해주는 함수입니다. `CEIL`과 `FLOOR`가 헷갈리시다면 `CEIL`은 천장을 의미하니까 올림! `FLOOR`는 바닥을 의미하니까 내림!으로 기억하시면 됩니다.
 
 ``` SQL
 SELECT 
@@ -217,14 +220,14 @@ SELECT
     ABS(-1),
     ABS(3-10);
 ```
-ABS()는 절댓값 처리를 해주는 함수입니다.
+`ABS()`는 절댓값 처리를 해주는 함수입니다.
 
 ``` SQL
 SELECT
     GREATEST(1,2,3),
     LEAST(1,2,3,4,5);
 ```
-greatest()는 가장 큰 값, least() 가장 작은 값을 반환해주는 함수입니다.
+`greatest()`는 가장 큰 값, `least()`는 가장 작은 값을 반환해주는 함수입니다.
 
 ``` SQL
 SELECT
@@ -234,20 +237,20 @@ SELECT
     TRUNCATE(1234.5678, -1), -- 1230
     TRUNCATE(1234.5678, -2); -- 1200
 ```
-소수점 이하 자리를 제거해주는 truncate 함수입니다. POW(제곱), SQRT(제곱근)을 구하는 숫자 함수들이 있습니다.
+소수점 이하 자리를 제거해주는 `truncate` 함수입니다. `POW`(제곱), `SQRT`(제곱근)을 구하는 숫자 함수들이 있습니다.
 
 ### 2. 문자열 함수
 ``` SQL
 SELECT UPPER('abcDEF'), LOWER('abcDEF');
 SELECT UCASE('abcDEF'), LCASE('abcDEF');
 ```
-UPPER, UCASE는 해당 문자열을 대문자로 바꿔주며 반대로 LOWER, LCASE는 소문자로 바꿔줍니다.
+`UPPER`, `UCASE`는 해당 문자열을 대문자로 바꿔주며 반대로 `LOWER`, `LCASE`는 소문자로 바꿔줍니다.
 
 ```SQL
 SELECT CONCAT('HELLO', ' ', 'THIS IS ', 2022);
 SELECT CONCAT_WS('-', 2022, 10, 30, 'AM');
 ```
-문자열을 합쳐주는 CONCAT 함수입니다. 파이썬에서 문자열 병합(+)을 사용할 때와 같습니다. CONCAT_WS(s,...)는 s를 이어붙이게 됩니다.
+문자열을 합쳐주는 `CONCAT` 함수입니다. 파이썬에서 문자열 병합(+)을 사용할 때와 같습니다. `CONCAT_WS(s,...)`는 s를 이어붙이게 됩니다.
 
 ``` SQL
 SELECT
@@ -256,7 +259,7 @@ SELECT
     SUBSTR('abcdefg', -4), -- defg
     SUBSTR('abcdefg', -4, 2); -- de
 ```
-문자열을 추출해주는 SUBSTR 함수입니다. SUBSTR(원본 문자열, 시작할 위치, 가져올 길이값)을 통해 문자를 추출합니다.
+문자열을 추출해주는 `SUBSTR` 함수입니다. `SUBSTR(원본 문자열, 시작할 위치, 가져올 길이값)`을 통해 문자를 추출합니다.
 
 ``` SQL
 SELECT 
@@ -266,7 +269,7 @@ SELECT
     SUBSTR(rental_date, 9, 2) AS day
 FROM rental;
 ```
-맨 왼쪽부터 시작하는 LEFT와 맨 오른쪽부터 시작하는 RIGHT 함수도 있습니다.
+맨 왼쪽부터 시작하는 `LEFT`와 맨 오른쪽부터 시작하는 `RIGHT` 함수도 있습니다.
 
 ``` SQL
 SELECT
@@ -275,29 +278,203 @@ SELECT
   CONCAT('|', RTRIM(' HELLO '), '|'), -- |  HELLO|
   CONCAT('|', TRIM(' HELLO '), '|'); -- |HELLO|
 ```
-- LTRIM: 왼쪽 공백 제거
-- RTRIM: 오른쪽 공백 제거
-- TRIM: 공백 제거
+- `LTRIM`: 왼쪽 공백 제거
+- `RTRIM`: 오른쪽 공백 제거
+- `TRIM`: 공백 제거
 
 ``` SQL
 SELECT customer_id, first_name, last_name, email
 FROM customer
 WHERE last_name = TRIM(' JOHNSON ');
 ```
-고객이 혹시 공백을 포함하여 입력했을 경우를 방지하기 위해 TRIM을 사용할 수 있습니다.
+고객이 혹시 공백을 포함하여 입력했을 경우를 방지하기 위해 `TRIM`을 사용할 수 있습니다.
 
 ``` SQL
 SELECT 
 	LPAD('abc', 5, '_'), -- '__abc'
 	RPAD('abc', 5, '_'); -- 'abc__'
 ```
-- LPAD(string, n, p): string의 길이가 n글자가 될 때까지 p를 이어붙인다.
-- RPAD(string, n, p): string의 길이가 n글자가 될 때까지 p를 이어붙인다.
+- `LPAD(string, n, p)`: string의 길이가 n글자가 될 때까지 p를 이어붙인다.
+- `RPAD(string, n, p)`: string의 길이가 n글자가 될 때까지 p를 이어붙인다.
 
 ``` SQL
 SELECT CONVERT('01', DECIMAL) = CONVERT('1', DECIMAL);
 ```
-CONVERT(a, type)은 a의 타입을 type으로 변경해주는 함수입니다.
+`CONVERT(a, type)`은 a의 타입을 type으로 변경해주는 함수입니다.
+
+## 시간, 날짜 관련 함수
+### 1. 시간/날짜 관련 함수
+``` SQL
+SELECT CURDATE(), CURTIME(), NOW();
+```
+- `CURDATE`: 현재 날짜 반환
+- `CURTIME`: 현재 시간 반환
+- `NOW`: 현재 시간과 날짜 
+
+``` SQL
+SELECT
+    rental_date,
+    YEAR(rental_date) AS year,
+    MONTHNAME(rental_date) AS month_name,
+    MONTH(rental_date) AS month,
+    WEEKDAY(rental_date) AS weekday,
+    DAYNAME(rental_date) AS day_name,
+    DAY(rental_date) AS day
+FROM rental;
+```
+- `YEAR`: datetime의 년도 반환
+- `MONTHNAME`: datetime의 월 이름 반환
+- `MONTH`: datetime의 월 반환
+- `WEEKDAY`: datetime의 요일값 반환(월요일 : 0..)
+- `DAYNAME`: datetime의 요일명 반환
+- `DAYOFMONTH, DAY`:  datetime의 날짜 반환
+
+``` SQL
+SELECT HOUR(NOW()), MINUTE(NOW()), SECOND(NOW());
+```
+- `HOUR`: datetiem의 시간 반환
+- `MINUTE`: datetiem의 분 반환
+- `SECOND`: datetime의 초 반환
+
+``` SQL
+SELECT 
+ADDDATE(NOW(), INTERVAL 1 MONTH),
+    ADDDATE(NOW(), INTERVAL 3 WEEK),
+    SUBDATE(NOW(), INTERVAL 1 MONTH);
+```
+- `ADDDATE`: 시간 더하기
+- `SUBDATE`: 시간 빼기
+
+``` SQL
+SELECT
+    rental_date,
+    return_date,
+    DATEDIFF(return_date, rental_date) AS duration
+FROM rental
+WHERE DATEDIFF(return_date, rental_date) >= 5;
+```
+- `DATEDIFF`를 통해 두 datetime의 시간차를 구할 수 있습니다.
+- `TIMEDIFF`도 있습니다.
+``` SQL
+SELECT STR_TO_DATE('2022-01-05 13:47', '%Y-%m-%d %T') as '현재 시각';
+```
+- `STR_TO_DATE(str, format)`를 통해 string을 해당 format의 꼴로 변경해줄 수 있습니다.
+
+### 2. 기타 함수
+``` SQL
+SELECT IF(1 + 1 = 3, '참이다.', '거짓이다.') AS '1 + 1 = 3'; 
+```
+- `IF(condition, true, false)`: 조건이 참이면 true 반환, 거짓이면 false 반환
+
+``` SQL
+SELECT
+CASE
+    WHEN -1 > 0 THEN '-1은 양수다.'
+    WHEN -1 = 0 THEN '-1은 -0이다.'
+    ELSE '-1은 음수다.'
+END;
+```
+이렇게 조건이 많을 때는 `CASE-WHEN-END`문을 통해 구현합니다.
+
+``` SQL
+SELECT rental_id,
+    CASE
+	WHEN amount < 1 THEN 'on sale'
+        WHEN amount BETWEEN 1 AND 4 THEN 'full price'
+        ELSE 'fancy'
+	END AS price
+FROM payment;
+```
+`CASE-WHEN-END`문을 응용한다면 위의 소스코드와 같이 사용할 수 있습니다.
+``` SQL
+SELECT
+    IFNULL('a', 'b'),
+    IFNULL(NULL, 'b');
+```
+- `IFNULL(a,b)`: a가 NULL일 경우, b를 출력합니다.
+
+## 그룹 함수
+테이블의 전체 행을 하나 이상의 컬럼(열)을 기준으로 컬럼값에 따라 그룹화하여 그룹별로 결과를 출력하는 함수를 `그룹 함수`라고 합니다.
+``` SQL
+SELECT
+    customer_id,
+    COUNT(rental_date) AS total
+FROM rental
+GROUP BY customer_id
+ORDER BY total DESC;
+```
+일자별 반환 갯수를 내림차순으로 정렬하기 위 소스코드와 같이 `COUNT` 그룹 함수를 응용할 수 있습니다.
+
+``` SQL
+SELECT
+    customer_id,
+    MAX(amount) AS max_amount,
+    MIN(amount) AS min_amount,
+    TRUNCATE(MAX(amount)+MIN(amount)/2, 2) AS med_amount,
+    TRUNCATE(AVG(amount), 2) AS avg_amount
+FROM payment
+GROUP BY customer_id;
+```
+`MAX`, `MIN`, `AVG` 등을 통해 고객별 가격(최대, 최소, 중앙, 평균) 출력할 수도 있습니다.
+
+``` SQL
+SELECT
+    COUNT(*) AS count, DATE(return_date) AS return_date
+FROM rental
+GROUP BY DATE(return_date)
+WITH ROLLUP;
+```
+`WITH ROLLUP`을 사용하면 전체의 집계값을 함께 추출해줍니다.
+
+``` SQL
+SELECT
+	COUNT(*) AS count, DATE(return_date) AS return_date
+FROM rental
+GROUP BY DATE(return_date)
+HAVING count >= 200;
+```
+그룹 함수를 사용할 때 조건문을 추가하고 싶다면 `HAVING`을 사용하면 됩니다. 그런데 WHERE과 HAVING은 어떤 차이가 있을까요?
+
+``` SQL
+SELECT
+	COUNT(*) AS count, DATE(return_date) AS return_date
+FROM rental
+WHERE rental_date > '2005-05-31'
+GROUP BY DATE(return_date)
+HAVING count >= 200;
+```
+`WHERE`는 그룹하기 전의 데이터, `HAVING`은 그룹 후 집계에 사용합니다. 따라서 2005년 5월 31일 이후의 데이터를 먼저 선별한 후, count가 200 이상인 데이터만 추출됩니다.
+
+``` SQL
+SELECT DISTINCT customer_id
+FROM rental;
+```
+`DISTINCT`는 중복된 값을 제거합니다. GROUP BY와 달리 기본적인 정렬을 지원하지 않습니다. 그렇기 때문에 더 빠릅니다.
+
+## 서브 쿼리
+서브 쿼리는 하나의 SQL문에 또 다른 SQL문이 포함된 것을 말합니다. 이때 안에 있는 쿼리는 inner query, 밖에 있는 쿼리를 outer query라고 합니다. 서브 쿼리는 크게 `상관 쿼리`와 `비상관 쿼리`로 나눠집니다. 그 자체만으로도 독립적인 실행이 가능한 inner query라면 `비상관 서브쿼리`라고 부릅니다. 반대로 outer query와 상관 관계가 있다면 `상관 쿼리`라고 합니다.
+
+### 1. 비상관 서브 쿼리
+``` SQL
+SELECT
+    CategoryID, CategoryName, Description,
+    (SELECT ProductName From Products WHERE ProductID = 1) AS Chais
+FROM Categories;
+```
+위 소스코드는 SELECT문에 포함된 inner query입니다. 제품명이 Chais인지 확인하는 inner query를 통해 비상관 서브 쿼리를 구현했습니다.
+
+``` SQL
+SELECT * FROM Products
+WHERE Price < (SELECT AVG(Price) FROM Products);
+```
+
+``` SQL
+SELECT title, description, release_year, rental_rate
+FROM film
+WHERE rental_rate > (SELECT AVG(rental_rate) FROM film);
+```
+
+평군 가격 미만이거나 초과한 데이터들만 추출하는 SQL문들입니다. 이처럼 그룹 함수를 함께 사용하는 것도 서브 쿼리입니다.
 
 # 3. 데이터 모델링의 이해
 
