@@ -1,7 +1,307 @@
 # DB와 SQL
-# 1. 데이터 모델링의 이해
 
-## 1-1 데이터 모델링이란?
+## Contents
+- [DB와 SQL에 대해 간략히 살펴보기](#1-db)
+- [기초 SQL 문법](#2-sql-문법)
+  * [SELECT문 기초](#select문-기초)
+  * [연산자](#연산자)
+  * [숫자, 문자열 함수](#숫자-문자열-함수)
+- [데이터 모델링의 이해](#3-데이터-모델링의-이해)
+- [Level Schema](#level-schema)
+
+
+# 1. DB
+## DB?
+DB란 database의 약자로 ``여러 사람이 공유하고 사용하기 위해 조직적으로 통합하여 데이터의 중복을 없애고 구조화한 데이터의 집합체``를 말합니다. 다양한 종류(계층형, 네트워크형)의 DB가 존재하지만 Excel과 같은 관계형 DB가 대표적입니다.
+
+> tip 테이블 Table의 구조
+
+데이터는 관계형 데이터베이스의 기본 단위인 테이블의 형태로 저장됩니다. 업무, 공부를 하시면서 Excel 프로그램을 많이 접해보셨을거라 생각합니다. Excel을 보시면 세로 방향으로 이루어진 속성들을 ``열 colum``이라고 합니다. 반대로 가로 방향으로 이루어진 속성들을 ``행 row``라고 합니다. 이렇게 2차원 형태의 구조를 가진 데이터의 저장장소이고, DB의 가장 기본적인 개념을 ``테이블 Table``이라고 합니다.
+
+## DBMS?
+'database management system'의 약자로 DB를 관리하기 위한 소프트웨어 프로그램을 DBMS라고 합니다. 대표적으로 orcle, microsoft의 access, mysql 등이 있습니다.
+
+## SQL?
+- SQL은 관계형 DB에서 `데이터 정의 definition`/`조작 manipulation`/`제어 control`를 위해 사용하는 언어입니다. 쉽게 말해 DB와 의사소통을 하기 위해 사용하는 언어입니다.
+- SQL은 ANSI/ISO 표준을 준수하므로 DBMS가 변경되어도 그대로 사용할 수 있습니다.
+
+|표준|설명|
+|---|---|
+|ANSI/ISO SQL 표준|INNER JOIN, NATURAL JOIN, USING 조건, ON 조건절 사용|
+|ANSI/ISO SQL3 표준|DBMS에 따라 차이를 표준화하여 제정 = case by case|
+
+# 2. SQL 문법
+이번 단락에서는 MYSQL을 통해 기초적인 SQL 문법들을 알아볼 것입니다.
+
+## SELECT문 기초
+### 1. 테이블의 모든 내용(*) 보기
+``` SQL
+SELECT * FROM film;
+```
+
+### 2. 원하는 column(열)만 보기
+``` SQL
+SELECT title, release_year, length
+FROM film;
+```
+
+``` SQL
+SELECT title, release_year, 'actors', 1
+FROM film;
+```
+테이블의 column이 아닌 값도 선택할 수 있습니다. 위의 코드의 값을 확인해보면 모든 행에 actors, 1이 나옵니다.
+
+### 3. 원하는 조건의 row(행)만 걸러서 보기
+``` SQL
+SELECT title, release_year
+FROM film
+WHERE release_year > 2002;
+```
+`WHERE` 구문을 통해 c나 python의 if문과 같이 조건을 붙여 원하는 데이터만 볼 수 있습니다.
+
+### 4. 원하는 순서대로 데이터 가져오기
+``` SQL
+SELECT title, release_year, rating
+FROM film
+ORDER BY title;
+```
+
+### 5. 원하는 만큼만 데이터 가져오기
+``` SQL
+SELECT title, release_year
+FROM film
+LIMIT 10;
+```
+``` SQL
+SELECT title, release_year
+FROM film
+LIMIT 20, 10;
+```
+위의 소드코드와 같이 LIMIT{가져올 개수} 또는 LIMIT {건너뛸 개수, 가져올 개수} 형태로 사용 가능합니다.
+
+### 6. 원하는 예명(alias)으로 가져오기
+``` SQL
+SELECT
+    film_id AS no,
+    title,
+    release_year,
+    rental_duration AS duration
+FROM film;
+```
+`AS문`을 통해 손쉽게 컬럼명 변경이 가능합니다.
+
+``` SQL
+SELECT
+    film_id AS No,
+    title,
+    release_year,
+    rental_duration AS duration,
+    length
+FROM film
+WHERE length < 60 AND duration < 8;
+```
+
+## 연산자
+|구분|연산자|의미|
+|---|:---:|---|
+|비교 연산자|=|같다.|
+||>|보다 크다.|
+||>=|보다 크거나 같다.|
+||<|보다 작다.|
+||<=|보다 작거나 같다.|
+|SQL 연산자|BETWEEN a AND b|a와 b 사이(a, b 값 포함)|
+||IN (list)|list에 있는 값 중 어느 하나라도 일치하면 된다.|
+||LIKE '비교 문자열'|비교 문자열과 형태가 일치하면 된다.|
+||IS NULL|NULL 값인 경우|
+|논리 연산자|AND|앞, 뒤의 조건을 동시 만족|
+||OR|앞, 뒤의 조건 중 하나라도 만족|
+||NOT|뒤에 오는 조건에 반대되는 결과를 반환|
+|부정 비교 연산자|!=|같지 않다.|
+||<>|같지 않다.(ISO 표준)|
+|부정 SQL 연산자|NOT BETWEEN a AND b|a와 b 사이에 있지 않다.|
+||NOT IN (list)|list 값에 포함되지 않는다.|
+||IS NOT NULL|NULL이 아니면 참 반환|
+
+### 1. 사칙연산
+``` SQL
+SELECT 1+2;
+SELECT 5-2.5 AS Difference;
+SELECT 'ABC'+3;
+SELECT '1'+'002'+3;
+```
+문자열은 0으로 인식하지만 숫자로 구성된 문자열은 숫자로 자동 인식합니다. 숫자로 구성된 문자열은 숫자로 자동 인식된다는 점을 다음과 같은 소스코드로 응용할 수 있습니다.
+
+``` SQL
+SELECT 
+	payment_id, 
+	rental_id, 
+    amount,
+    amount * 0.75 AS sale_amount
+FROM payment;
+```
+숫자로 구성된 문자열에 할인율인 0.75를 곱하여 할인된 가격을 구할 수 있습니다.
+
+### 2. 참거짓 연산자
+``` SQL
+SELECT TRUE IS TRUE;
+SELECT TRUE IS NOT FALSE;
+SELECT (TRUE IS TRUE) IS NOT TRUE;
+```
+기본적으로 MySQL에서도 TRUE, FALSE는 각각 1과 0을 저장하고 있습니다. AND, OR과 비슷한 ``IS``, ``IS NOT`` 연산자를 통해 살펴봅시다. ``IS``는 양쪽이 같을 때 True를 반환합니다. 반면 ``IS NOT``의 경우 양쪽이 다를 때 TRUE를 반환합니다.
+
+``` SQL
+SELECT
+    payment_id, 
+    rental_id, 
+    amount > 10 AS overdue
+FROM payment;
+```
+``` SQL
+SELECT 
+    payment_id,
+    rental_id,
+    NOT amount > 10 AS non_overdue
+FROM payment;
+``` 
+amount가 10 초과이거나 또는 10을 넘지 않는 데이터를 살펴보도록 하겠습니다. 해당 소스코드를 출력하면 overdue, non_overdue 컬럼에는 0과 1로 구성된 값들이 나옵니다.
+
+### 3. BETEWEEN 연산자
+``` SQL
+SELECT customer_id, rental_id, amount
+FROM payment
+WHERE amount BETWEEN 4 AND 7;
+```
+amount가 4$와 7$ 사이에 있는 데이터만 추출해보았습니다.
+
+### 4. IN 연산자
+``` SQL
+SELECT 1+2 IN (2,3,4);
+SELECT 'hello' IN (1, TRUE, 'hello');
+``` 
+
+``` SQL
+SELECT address, district, city_id
+FROM address
+WHERE district IN ('Texas', 'Alberta');
+```
+IN 연산자를 활용해 Texas, Alberta에 속한 주소만 추출해보았습니다.
+
+### 5. LIKE 연산자
+``` SQL
+SELECT
+    address, 
+    district LIKE 'a%' AS A_blahblah,
+    city_id
+FROM address;
+```
+LIKE문은 와일드카드를 사용해서 데이터를 조회할 수 있습니다.
+|와일드 카드|설명|
+|:---:|---|
+|%|어떤 문자를 포함한 모든 것을 조회한다. 예를 들어 '%es%'는 문자 중간에 'es'가 포함된 모든 문자를 조회한다. 다만 정상적인 Index Range Scan이 불가능하다.|
+|_ |한 개인 단일 문자를 의미한다. 예를 들어 'alex_'은 'alex'으로 시작하고 그 뒤에 한 글자만 더 붙는 것을 조회한다. (alexa...)|
+|* |모든 것을 의미한다.|
+
+## 숫자, 문자열 함수
+### 1. 숫자 관련 함수
+``` SQL
+SELECT
+    ROUND(0.5),
+    CEIL(0.4),
+    FLOOR(0.6);
+```
+``ROUND``는 반올림 처리를 해주는 함수입니다. ``CEIL``은 올림, ``FLOOR``는 내림 처리를 해주는 함수입니다. CEIL과 FLOOR가 헷갈리시다면 CEIL은 천장을 의미하니까 올림! FLOOR는 바닥을 의미하니까 내림!으로 기억하시면 됩니다.
+
+``` SQL
+SELECT 
+    ABS(1),
+    ABS(-1),
+    ABS(3-10);
+```
+ABS()는 절댓값 처리를 해주는 함수입니다.
+
+``` SQL
+SELECT
+    GREATEST(1,2,3),
+    LEAST(1,2,3,4,5);
+```
+greatest()는 가장 큰 값, least() 가장 작은 값을 반환해주는 함수입니다.
+
+``` SQL
+SELECT
+    TRUNCATE(1234.5678, 1), -- 1234.5
+    TRUNCATE(1234.5678, 2), -- 12345.56
+    TRUNCATE(1234.5678, 3), -- 1234.567
+    TRUNCATE(1234.5678, -1), -- 1230
+    TRUNCATE(1234.5678, -2); -- 1200
+```
+소수점 이하 자리를 제거해주는 truncate 함수입니다. POW(제곱), SQRT(제곱근)을 구하는 숫자 함수들이 있습니다.
+
+### 2. 문자열 함수
+``` SQL
+SELECT UPPER('abcDEF'), LOWER('abcDEF');
+SELECT UCASE('abcDEF'), LCASE('abcDEF');
+```
+UPPER, UCASE는 해당 문자열을 대문자로 바꿔주며 반대로 LOWER, LCASE는 소문자로 바꿔줍니다.
+
+```SQL
+SELECT CONCAT('HELLO', ' ', 'THIS IS ', 2022);
+SELECT CONCAT_WS('-', 2022, 10, 30, 'AM');
+```
+문자열을 합쳐주는 CONCAT 함수입니다. 파이썬에서 문자열 병합(+)을 사용할 때와 같습니다. CONCAT_WS(s,...)는 s를 이어붙이게 됩니다.
+
+``` SQL
+SELECT
+    SUBSTR('abcdefg', 3), -- cdefg
+    SUBSTR('abcdefg', 3,2), -- cd
+    SUBSTR('abcdefg', -4), -- defg
+    SUBSTR('abcdefg', -4, 2); -- de
+```
+문자열을 추출해주는 SUBSTR 함수입니다. SUBSTR(원본 문자열, 시작할 위치, 가져올 길이값)을 통해 문자를 추출합니다.
+
+``` SQL
+SELECT 
+    rental_date,
+    LEFT(rental_date, 4) AS year, --맨 왼쪽에서부터 4글자
+    SUBSTR(rental_date, 6, 2) AS month,
+    SUBSTR(rental_date, 9, 2) AS day
+FROM rental;
+```
+맨 왼쪽부터 시작하는 LEFT와 맨 오른쪽부터 시작하는 RIGHT 함수도 있습니다.
+
+``` SQL
+SELECT
+  CONCAT('|', ' HELLO ', '|'), --|  HELLO  |
+  CONCAT('|', LTRIM(' HELLO '), '|'), -- |HELLO  |
+  CONCAT('|', RTRIM(' HELLO '), '|'), -- |  HELLO|
+  CONCAT('|', TRIM(' HELLO '), '|'); -- |HELLO|
+```
+- LTRIM: 왼쪽 공백 제거
+- RTRIM: 오른쪽 공백 제거
+- TRIM: 공백 제거
+
+``` SQL
+SELECT customer_id, first_name, last_name, email
+FROM customer
+WHERE last_name = TRIM(' JOHNSON ');
+```
+고객이 혹시 공백을 포함하여 입력했을 경우를 방지하기 위해 TRIM을 사용할 수 있습니다.
+
+``` SQL
+SELECT 
+	LPAD('abc', 5, '_'), -- '__abc'
+	RPAD('abc', 5, '_'); -- 'abc__'
+```
+- LPAD(string, n, p): string의 길이가 n글자가 될 때까지 p를 이어붙인다.
+- RPAD(string, n, p): string의 길이가 n글자가 될 때까지 p를 이어붙인다.
+
+``` SQL
+SELECT CONVERT('01', DECIMAL) = CONVERT('1', DECIMAL);
+```
+CONVERT(a, type)은 a의 타입을 type으로 변경해주는 함수입니다.
+
+# 3. 데이터 모델링의 이해
+
+## 데이터 모델링이란?
 ``데이터 모델링``이란 <b> 복잡한 데이터를 개체, 관계, 속성을 중심으로 단순화 시켜 DB로 옮기는 과정입니다.</b>
 
 ### 데이터 모델링의 특징
