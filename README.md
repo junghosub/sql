@@ -1,15 +1,20 @@
 # DB와 SQL
 
 ## Contents
-- [DB와 SQL에 대해 간략히 살펴보기](#1-db)
-- [기초 SQL 문법](#2-sql-문법)
+* [DB와 SQL에 대해 간략히 살펴보기](#1-db)
+* [기초 SQL 문법](#2-sql-문법)
   * [SELECT문 기초](#select문-기초)
   * [연산자](#연산자)
   * [숫자/문자열 함수](#숫자-문자열-함수)
   * [시간/날짜 함수](#시간-날짜-관련-함수)
   * [그룹 함수](#그룹-함수)
   * [서브 쿼리](#서브-쿼리)
-- [데이터 모델링의 이해](#3-데이터-모델링의-이해)
+  * [JOIN을 활용한 테이블 조립](#join)
+  * [테이블 생성 및 데이터 입력](#테이블-생성-및-데이터-입력)
+  * [데이터 변경 및 삭제](#데이터-변경-및-삭제)
+* [데이터 모델링의 이해](#3-데이터-모델링의-이해)
+  * [데이터 모델링이란?](#데이터-모델링이란)
+  * [ERD](#erd)
 - [Level Schema](#level-schema)
 
 
@@ -33,8 +38,17 @@ DB란 database의 약자로 ``여러 사람이 공유하고 사용하기 위해 
 |ANSI/ISO SQL 표준|INNER JOIN, NATURAL JOIN, USING 조건, ON 조건절 사용|
 |ANSI/ISO SQL3 표준|DBMS에 따라 차이를 표준화하여 제정 = case by case|
 
+### SQL의 종류
+|명령어 종류|명령어|설명|
+|---|---|---|
+|데이터 조작어 DML|SELECT|DB에 들어있는 데이터를 조회하거나 검색하기 위한 명령어|
+||INSERT, UPDATE, DELETE|DB의 테이블의 데이터에 변형을 가하는 명령어들이다. 데이터를 새로 집어넣거나 삭제 및 변경하는 명령어|
+|데이터 정의어 DDL|CREATE, ALTER, DROP, RENAME|데이터 구조를 정의하는데 사용되는 명령어로 테이블을 생성하거나 변경, 삭제 또는 이름을 바꾸는 등의 명령어|
+|데이터 제어어 DCL|GRANT, REVOKE|DB에 접근하고 객체들을 사용하도록 권한을 주고 회수하는 명령어|
+|트랜잭션 제어어 TCL|COMMIT, ROLL BACK|논리적인 작업의 단위를 묶어 DML에 의해 조작된 결과를 트랜잭션별로 제어하는 명령어|
+
 # 2. SQL 문법
-이번 단락에서는 MYSQL을 통해 기초적인 SQL 문법들을 알아볼 것입니다.
+이번 단락에서는 MySQL을 통해 기초적인 SQL 문법들을 알아볼 것입니다. 데이터셋은 [sakila](https://downloads.mysql.com/docs/sakila-en.pdf)를 사용했습니다. 자세한 테이블 설명 및 다운로드 방법을 하고 싶으시다면 링크를 클릭해주세요.
 
 ## SELECT문 기초
 ### 1. 테이블의 모든 내용(*) 보기
@@ -476,6 +490,193 @@ WHERE rental_rate > (SELECT AVG(rental_rate) FROM film);
 
 평군 가격 미만이거나 초과한 데이터들만 추출하는 SQL문들입니다. 이처럼 그룹 함수를 함께 사용하는 것도 서브 쿼리입니다.
 
+### 2. 상관 쿼리
+``` SQL
+SELECT customer_id, amount, 
+	(SELECT CONCAT_WS(' ',first_name, last_name) FROM staff S 
+        WHERE S.staff_id = P.staff_id
+	) AS staff_name
+FROM payment P;
+```
+
+``` SQL
+SELECT store_id, address_id,
+	(
+	    SELECT COUNT(*) FROM address a 
+	    WHERE a.address_id = c.customer_id
+	) AS count,
+    (
+    	SELECT district FROM address a
+        WHERE a.address_id = c.address_id
+	)
+FROM customer c;
+```
+
+## JOIN
+JOIN은 2개의 테이블에서 각각의 공통 Key 값을 통해 테이블을 조합하는 방법입니다.
+
+<img src = https://user-images.githubusercontent.com/72376781/158281168-b1ea2a2d-1c89-4033-b823-9e28d1d496d3.png width = 700>
+
+
+### 1. 내부 조인 INNER JOIN
+`내부 조인 INNER JOIN`은 두 테이블을 조인할 때, 두 테이블에 모두 지정한 열의 데이터가 있어야 합니다.
+
+``` SQL
+SELECT A.actor_id, F.film_id, F.title, F.description FROM film_actor A
+JOIN film F ON F.film_id = A.film_id;
+```
+또한 `내부 조인 INNER JOIN`을 할 땐 ambiguous를 주의해야합니다. film_actor와 film이란 테이블 모두 film_id란 공통 컬럼을 갖고 있습니다. 따라서 film_actor의 film_id, film의 film_id와 같이 지정해주지 않는다면 에러가 발생합니다.
+
+``` SQL
+SELECT
+    FA.actor_id, 
+    CONCAT_WS(' ', A.first_name, A.last_name) AS actor_name,
+    FA.film_id,
+    F.title,
+    F.special_features
+FROM actor A
+JOIN film_actor FA 
+ON FA.actor_id = A.actor_id
+JOIN film F 
+ON F.film_id = FA.film_id
+WHERE F.special_features LIKE ('%Behind%');
+```
+이와 같이 여러 개의 테이블을 JOIN 할 수도 있습니다.
+
+``` SQL
+SELECT
+    I.film_id, 
+    F.title, 
+    COUNT(I.film_id) AS count FROM inventory I
+JOIN film F ON F.film_id = I.film_id
+GROUP BY I.film_id
+ORDER BY count DESC;
+```
+JOIN문과 GROUP BY문을 통해 인벤토리에 가장 많이 담긴 영화를 찾아볼 수도 있습니다.
+
+### 2. 외부 조인 OUTER JOIN
+외부 조인 OUTER JOIN은 두 테이블을 조인할 때, 1개의 테이블에만 데이터가 있어도 결과가 나옵니다.
+
+``` SQL
+SELECT
+    C1.customer_id,
+    CONCAT_WS(' ', C1.first_name, C1.last_name) AS customer,
+    C2.customer_id,
+    CONCAT_WS(' ', C2.first_name, C2.last_name) AS next_customer
+FROM customer C1
+LEFT JOIN customer C2
+ON C1.customer_id + 1 = C2.customer_id;
+```
+
+``` SQL
+SELECT
+    C1.customer_id,
+    CONCAT_WS(' ', C1.first_name, C1.last_name) AS customer,
+    C2.customer_id,
+    CONCAT_WS(' ', C2.first_name, C2.last_name) AS next_customer
+FROM customer C1
+RIGHT JOIN customer C2
+ON C1.customer_id + 1 = C2.customer_id;
+```
+
+이와 같이 데이터를 출력할 한 테이블을 정할 수도 있고, FULL OUTER JOIN을 통해 왼쪽과 오른쪽 테이블의 값을 모두 출력할 수도 있습니다.
+
+## 테이블 생성 및 데이터 입력
+
+### 1. 테이블 생성 및 제약 넣기
+
+``` SQL
+CREATE TABLE people(
+	person_id INT AUTO_INCREMENT PRIMARY KEY,
+	person_name VARCHAR(10) NOT NULL,
+    nickname VARCHAR(10) UNIQUE NOT NULL,
+    age TINYINT UNSIGNED,
+    is_married TINYINT DEFAULT 0
+    );
+ ```
+`CREATE TABLE`을 통해 테이블을 생성할 수 있습니다. 다만 테이블을 생성할 땐 제약 조건을 넣어줘야합니다. 테이블에 잘못된 데이터 입력을 사전 방지하기 위해 데이터의 자료형, primary key, NULL 조건과 같은 제약 조건을 사전 설정합니다. 제약 조건은 다음의 예시와 같습니다.
+
+- AUTO_INCREMENT: 새 행 생성시마다 자동으로 1씩 증가
+- PRIMARY KEY: 중복 입력 불가, NULL 불가
+- UNIQUE: 중복 입력 불가
+- NOT NULL: NULL 입력 불가
+- UNSIGNED: 양수만 가능
+- DEFAULT: 값 입력이 없을 시 기본값
+
+### 2. 데이터 입력하기
+
+``` SQL
+INSERT INTO friend
+	(person_id, person_name, age, birthday)
+	VALUES (1, '정호섭', 27, '1996-12-15');
+```
+
+friend란 테이블에 person_id, person_name, age, birthday의 컬럼에 각각의 데이터를 `INSERT INTO`문을 통해 입력할 수 있습니다.
+
+``` SQL
+INSERT INTO friend
+	VALUES (2, '전우치', 18, '1003-05-12');
+```
+만약 위 소스코드처럼 테이블의 모든 컬럼에 값을 넣을 땐 컬럼명은 생략 가능합니다.
+
+``` SQL
+INSERT INTO friend
+	(person_id, person_name, birthday)
+	VALUES (3, '임꺽정', '1996-11-04');
+```
+컬럼의 제약 조건이 NOT NULL이 아닐 시엔 일부 컬럼에만 값을 넣을 수도 있습니다. 하지만 컬럼에 맞는 자료형을 입력해야만 합니다.
+
+``` SQL
+INSERT INTO friend
+	(person_id, person_name, age, birthday)
+	VALUES
+	(4, '존 스미스', 30, '1991-03-02'),
+        (5, '몽키 D 루피', 15, '2006-12-07'),
+        (6, '황비홍', 24, '1997-10-30');
+```
+이와 같이 여러 개의 데이터를 한 번에 입력할 수도 있습니다.
+
+## 데이터 변경 및 삭제
+
+### 1. UPDATE
+``` SQL
+UPDATE menus
+SET menu_name = '삼선짜장'
+WHERE menu_id = 12;
+```
+
+``` SQL
+UPDATE menus
+SET price = price + 1000
+WHERE fk_business_id = 8;
+```
+`UPDATE`절을 통해 주어진 조건의 행의 데이터를 변경할 수 있습니다.
+
+``` SQL
+UPDATE menus
+SET
+    menu_name = '응급실 떡볶이',
+    kilocalories = 492.78,
+    price = 5000
+WHERE
+    fk_business_id = 4
+    AND menu_name = '국물떡볶이';
+```
+여러 개의 컬럼 또한 변경할 수 있습니다.
+
+### 2. DELETE
+``` SQL
+DELETE FROM businesses
+WHERE status = 'CLS'; --조건
+```
+`DELETE`는 `WHERE`절을 데이터를 하나하나 삭제하는 방식입니다. 만약 `WHERE`절을 사용하지 않는다면 전체 데이터가 사라지게 됩니다. 하지만 내부적으로는 데이터 하나하나가 삭제되는 방식이므로 처리 속도는 느립니다. 데이터가 모두 삭제되더라도 데이터가 담겨져 있던 용량은 삭제되지 않습니다. 또한 COMMIT 전이라면 `ROLL BACK`을 통해 복구 할 수 있습니다.
+
+### 3. TRUNCATE
+``` SQL
+TRUNCATE businesses;
+```
+`TRUNCATE`는 전체 데이터를 삭제하는 방식입니다. 테이블은 삭제되지 않고 데이터만 삭제되며 데이터가 차지했던 용량도 줄어듭니다. 따라서 `TRUNCATE`를 하게 되면 테이블을 처음 생성했을 때와 같게 됩니다. 또한 자동 COMMIT 되는 명령어이기 때문에 ROLL BACK은 불가합니다. 이외에도 테이블, 데이터 전체를 삭제하고 공간도 초기화하는 `DROP`이 있습니다.
+
 # 3. 데이터 모델링의 이해
 
 ## 데이터 모델링이란?
@@ -501,7 +702,7 @@ WHERE rental_rate > (SELECT AVG(rental_rate) FROM film);
 - ``논리적 모델링``: DB의 논리적 파트로 변환시키는 과정입니다. <b>key, 관계, 속성 등을 모두 정의 및 표현</b>하는 단계입니다.
 - ``물리적 모델링``: 데이터가 저장될 수 있도록 논리적 -> 물리적 구조로 변환시키는 과정입니다. 성능, 보안, 가용성 등을 고려하여 DB를 실제로 구축하는 단계로 테이블, 인덱스, 함수 등을 생성하는 단계입니다.
 
-### ERD
+## ERD
 테이블간 상관 관계를 그림으로 도식화한 것을 'ERD'라고 합니다. ERD의 구성 요소는 `` 엔터티 Entity``, ``관계 Relationship``, ``속성 Attribute ``로 3가지입니다.
 
 <img src = "https://user-images.githubusercontent.com/72376781/158088632-2ab0596e-c0d1-42ca-95db-e8451d9f70bc.jpg" width = 500>
@@ -510,11 +711,44 @@ WHERE rental_rate > (SELECT AVG(rental_rate) FROM film);
 
 #### ERD의 작성 절차
 1. 엔터티를 도출하고 그린다.
-2. 엔터티 배치한다.
+2. 엔터티를 배치한다.
 3. 엔터티간 관계 설정한다.
 4. 관계 서술한다.
 5. 관계 참여도를 표현한다.
 6. 관계 필수 여부를 표현한다.
+
+그렇다면 엔터티는 무엇이고 속성, 관계는 무엇일까요?
+
+### 1. 엔터티 entity
+`엔터티 entity`란 <b>업무에 필요하게 정보들을 저장 및 관리하기 위한 집합적인 것(thing)</b>을 말합니다. 예를 들어 학교에서 업무를 위해 학생이라는 엔터티를 정의한다고 합시다. 학생이란 엔터티에는 이름, 학번, 전공, 학점 등 다양한 속성 attribute들을 갖게 됩니다.
+
+엔터티는 다음과 같은 특징들을 갖습니다.
+- 업무에서 필요로 하는 정보이다.
+- 유일한 식별자에 의해 식별이 가능하다. 예를 들어 한 반에 동명이인이 존재하면 이름만으론 유일하게 식별할 수 없습니다. 따라서 학급 번호와 같이 유일한 식별자를 통해 식별 할 수 있도록 해야합니다.
+- 두 개 이상의 인스턴스의 집합이다.
+- 반드시 속성을 가진다.
+- 다른 엔터티와 관계가 존재한다.
+
+### 2. 속성 attribute
+`속성 attribute`란 업무에서 필요로 하는 인스턴스로 관리하고자 하는 의미상 더 이상 분리되지 않는 최소의 데이터 단위를 말합니다. 읽다보면 엔터티-속성-인스턴스가 헷갈리실 수 있습니다. 학생이란 엔터티를 다시 생각해봅시다. 학생 엔터티에는 이름, 학번, 전공, 학점 등의 속성이 존재합니다. 다시 말해 엔터티는 속성들의 집합입니다.
+
+|이름|학번|전공|학점|
+|---|---|---|---|
+|정호섭|201511995|사회학|3.88|
+
+이와 같이 각 속성에 맞는 속성값들로 이루어져 만들어진 객체를 `인스턴스 instance`라고 합니다. 그렇기 때문에 `속성 attribute`이 최소의 데이터 단위가 되는 것입니다.
+
+속성은 다음과 같은 특징을 갖습니다.
+- 엔터티와 마찬가지로 반드시 해당 업무에서 필요하고 관리하고자 하는 정보이어야 한다.
+- 하나의 속성에는 하나의 속성값만 가진다. 하나의 속성에 여러 개의 값이 있는 다중값일 경우 별도의 엔터티를 이용하여 분리한다.
+- 정규화 이론을 근거로 <b>주식별자에 함수적으로 종속된다. 즉 기본키가 변경되면 속성 값도 변경된다.</b>
+
+### 3. 관계 relationship
+관계는 '엔터티 간의 관련성을 의미'합니다. 이러한 관계는 어떤 목적으로 연결되었는가에 따라 `존재에 의한 관계`와 `행위에 의한 관계`로 구분됩니다.
+
+<img src = https://user-images.githubusercontent.com/72376781/158291136-21d066b3-958d-4d68-a9c9-4a8a5d9a9a56.jpg width = 700>
+
+위 그림과 같이 `존재에 의한 관계`는 엔터티 간의 상태를 의미합니다. '소속된다'는 것은 어떤 행위가 아닌 손흥민 선수가 토트넘이라는 팀에 소속되었기 때문에 존재에 의해 생성되는 관계입니다. 반면 주문과 같은 `행위에 의한 관계`는 '주문'이라는 행위를 통해 생성된 관계입니다.
 
 ## Level Schema
 사용자, 설계자, 개발자가 DB를 보는 관점에 따라 DB를 기술하고, 관계를 정리한 [ANSI 표준](https://velog.io/@gillog/ANSI-SQL%EC%9D%B4%EB%9E%80)으로 <b>DB의 독립성을 확보할 수 있는 방법</b>입니다.
